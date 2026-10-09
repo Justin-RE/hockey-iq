@@ -32,6 +32,19 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# generated Prisma client
+/src/generated/
+
+# playwright
+/playwright-report/
+/test-results/
+/blob-report/
+
+# cdk
+/infra/cdk.out/
+/infra/cdk.context.json
 
 # vercel
 .vercel

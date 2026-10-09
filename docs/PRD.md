@@ -20,20 +20,21 @@ A 2D, top-down web game. Each **scenario** shows a field hockey pitch with simpl
 
 ## MVP scenario list
 
-| Slug | Situation | Category |
-| --- | --- | --- |
-| `pc-defense-first-runner` | Defending a penalty corner: the first runner's job | Set piece |
-| `pc-attack-injection` | Attacking a penalty corner: where the ball must go before a shot | Set piece / rules |
-| `sixteen-yard-hit-outlet` | Defensive free hit inside 16 yards: safe outlet | Defense |
-| `free-hit-five-yards` | Opponent's free hit: where defenders must stand | Rules |
-| `goal-side-marking` | Marking an attacker entering your 25 | Defense |
-| `obstruction-shielding` | Under pressure with the ball: shielding vs. moving the ball | Rules |
-| `channel-the-attacker` | 1v1 defending: jab and channel vs. diving in | Defense |
-| `two-v-one-overlap` | 2v1 attack: draw the defender, then pass | Attack |
+| Slug                      | Situation                                                        | Category          |
+| ------------------------- | ---------------------------------------------------------------- | ----------------- |
+| `pc-defense-first-runner` | Defending a penalty corner: the first runner's job               | Set piece         |
+| `pc-attack-injection`     | Attacking a penalty corner: where the ball must go before a shot | Set piece / rules |
+| `sixteen-yard-hit-outlet` | Defensive free hit inside 16 yards: safe outlet                  | Defense           |
+| `free-hit-five-yards`     | Opponent's free hit: where defenders must stand                  | Rules             |
+| `goal-side-marking`       | Marking an attacker entering your 25                             | Defense           |
+| `obstruction-shielding`   | Under pressure with the ball: shielding vs. moving the ball      | Rules             |
+| `channel-the-attacker`    | 1v1 defending: jab and channel vs. diving in                     | Defense           |
+| `two-v-one-overlap`       | 2v1 attack: draw the defender, then pass                         | Attack            |
 
 ## MVP scope
 
 In scope:
+
 - Scenario picker grouped by category, with a difficulty label.
 - Scenario player: pitch, avatars, prompt, choices, outcome animation, feedback, explanation.
 - Guest play with progress stored in the browser only.
@@ -42,6 +43,7 @@ In scope:
 - Keyboard play, text-first content, color-blind-safe team colors.
 
 Out of scope for MVP:
+
 - Real-time multiplayer, free-roam control of avatars, sound.
 - Coach dashboards, teams, leaderboards (they require more personal data).
 - Scenario editor UI (scenarios are authored in code and reviewed via PRs).

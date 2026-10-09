@@ -1,0 +1,15 @@
+---
+description: Security and privacy rules (children may use this app)
+alwaysApply: true
+---
+
+# Security and privacy
+
+- Players may be under 13 (COPPA). Do not add fields or integrations that collect personal data (email, real name, birthday, location, photos, free-text bios, third-party trackers) without a new ADR and a privacy review.
+- Never read, print, or commit `.env` files, tokens, or secrets. Use `.env.example` for documentation and AWS Secrets Manager in deployed environments.
+- Re-check the session inside every Server Action and Route Handler. Never trust user ids sent from the client.
+- Hash passwords only via `src/lib/auth/password.ts` (scrypt). Never log passwords or session cookies.
+- Keep secrets and personal data out of `'use cache'` arguments and `cacheTag` values (they are stored in plain text).
+- Database access goes through Prisma; no string-built SQL.
+- IAM in `infra/`: least privilege, no `*` actions on `*` resources, no long-lived access keys.
+- New dependencies: prefer well-maintained packages; note why in the PR description.

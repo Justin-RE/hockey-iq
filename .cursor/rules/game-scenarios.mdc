@@ -1,0 +1,25 @@
+---
+description: Scenario schema, pitch coordinates, and content accuracy rules
+globs: src/scenarios/**,src/game/**
+alwaysApply: false
+---
+
+# Scenarios
+
+The schema is `ScenarioSchema` in `src/game/engine/schema.ts`. Every scenario file in `src/scenarios/` exports one `Scenario` and is registered in `src/scenarios/index.ts`.
+
+## Coordinates
+
+- The pitch is 100 x 60 (yards). `x` runs from your own backline (0) to the opponent's backline (100); `y` from the top sideline (0) to the bottom sideline (60).
+- Goals are centered at `y = 30`. Shooting circles have a 16-yard radius around each goal. 25-yard lines are at `x = 25` and `x = 75`; center line at `x = 50`.
+- "You" always play for the `home` team and attack toward `x = 100`.
+
+## Content rules
+
+- Exactly one avatar has `isYou: true`; exactly one choice has `correct: true`.
+- 2-4 choices. Each choice has `feedback` (1-2 sentences) and `moves` that animate its outcome.
+- `description` must describe the picture in words (screen readers cannot see the canvas).
+- Rules content must match current FIH / NFHS girls' field hockey rules. If rules differ by level, say so in `explanation`.
+- Slugs are permanent once merged to `main`.
+
+To add one, use the `add-scenario` skill.
