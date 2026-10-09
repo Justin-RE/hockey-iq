@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String    @id @default(cuid())
+  nickname     String    @unique
+  passwordHash String
+  createdAt    DateTime  @default(now())
+  attempts     Attempt[]
+}
+
+model Attempt {
+  id           String   @id @default(cuid())
+  userId       String
+  scenarioSlug String
+  choiceId     String
+  correct      Boolean
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, scenarioSlug])
+}

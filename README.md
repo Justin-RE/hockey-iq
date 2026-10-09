@@ -13,21 +13,21 @@ Requirements: Node 22+, pnpm 10, Docker.
 ```bash
 pnpm install
 cp .env.example .env          # then fill in SESSION_PASSWORD
-docker compose up -d db       # local Postgres on :5432
+docker compose up -d db       # local Postgres on :5434
 pnpm db:migrate               # apply migrations
 pnpm dev                      # http://localhost:3000
 ```
 
 ## Scripts
 
-| Command | What it does |
-| --- | --- |
-| `pnpm dev` | Next.js dev server |
-| `pnpm lint` / `pnpm typecheck` / `pnpm format` | Static checks |
-| `pnpm test` | Vitest unit tests |
-| `pnpm e2e` | Playwright end-to-end tests (needs the DB running) |
-| `pnpm db:migrate` | Create/apply Prisma migrations in dev |
-| `pnpm --filter infra synth` | Synthesize the AWS CDK stacks |
+| Command                                        | What it does                                       |
+| ---------------------------------------------- | -------------------------------------------------- |
+| `pnpm dev`                                     | Next.js dev server                                 |
+| `pnpm lint` / `pnpm typecheck` / `pnpm format` | Static checks                                      |
+| `pnpm test`                                    | Vitest unit tests                                  |
+| `pnpm e2e`                                     | Playwright end-to-end tests (needs the DB running) |
+| `pnpm db:migrate`                              | Create/apply Prisma migrations in dev              |
+| `pnpm --filter infra synth`                    | Synthesize the AWS CDK stacks                      |
 
 ## Working in Cursor
 

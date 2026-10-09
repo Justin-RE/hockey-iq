@@ -1,0 +1,9 @@
+pnpm-lock.yaml
+.next/
+out/
+coverage/
+src/generated/
+prisma/migrations/
+playwright-report/
+test-results/
+infra/cdk.out/

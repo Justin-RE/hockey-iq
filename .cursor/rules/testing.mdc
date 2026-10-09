@@ -1,0 +1,22 @@
+---
+description: Testing expectations for HockeyIQ
+globs: src/**/*.ts,src/**/*.tsx,e2e/**/*.ts
+alwaysApply: false
+---
+
+# Testing
+
+- Unit tests: Vitest, colocated as `*.test.ts` next to the code. Run with `pnpm test`.
+- E2E tests: Playwright in `e2e/`. Run with `pnpm e2e` (starts the app; needs Postgres from `docker compose up -d db`).
+- Every change to `src/game/engine/` or `src/scenarios/` needs a unit test.
+- Every new page or user flow needs at least one Playwright happy-path test.
+- Select elements in E2E by role and accessible name, not CSS classes:
+
+```ts
+// Good
+await page.getByRole("button", { name: /stay goal-side/i }).click();
+// Bad
+await page.locator(".choice-btn:nth-child(2)").click();
+```
+
+- Before calling work done: `pnpm lint && pnpm typecheck && pnpm test`.
