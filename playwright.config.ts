@@ -21,5 +21,13 @@ export default defineConfig({
         url: `${baseURL}/api/health`,
         reuseExistingServer: !process.env.CI,
         timeout: 180_000,
+        env: {
+          DATABASE_URL:
+            process.env.DATABASE_URL ?? "postgresql://hockey:hockey@localhost:5434/hockey_iq",
+          SESSION_PASSWORD:
+            process.env.SESSION_PASSWORD ?? "e2e-only-session-password-not-a-real-secret",
+          COOKIE_SECURE: "false",
+          LOG_LEVEL: "warn",
+        },
       },
 });

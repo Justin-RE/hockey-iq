@@ -8,7 +8,7 @@ alwaysApply: true
 - Next.js 16 App Router with `cacheComponents` and `partialPrefetching` on. Read `node_modules/next/dist/docs/` before using an unfamiliar Next.js API.
 - Request-time data (`cookies()`, `headers()`, session, DB reads per user) must render inside `<Suspense>`. Cacheable data uses `'use cache'`.
 - TypeScript strict. Import app code via `@/` (maps to `src/`).
-- Prisma 7: import the client from `@/generated/prisma/client`, never `@prisma/client`. Only `src/lib/db.ts` constructs `PrismaClient`.
+- Prisma 7: import the client from `@/generated/prisma/client`, never `@prisma/client`. Only `src/lib/db.ts` constructs `PrismaClient`; use `getDb()`.
 - Server-only modules start with `import "server-only"`.
 - Phaser 4 lives only under `src/game/phaser/` and is loaded with dynamic `import("phaser")` inside a client effect. Phaser's own agent docs are in `node_modules/phaser/skills/`.
 - Game rules and scoring live in `src/game/engine/` and must not import React, Next.js, or Phaser.
@@ -18,7 +18,8 @@ alwaysApply: true
 
 ```ts
 // Good
-import { prisma } from "@/lib/db";
+import { getDb } from "@/lib/db";
+const user = await getDb().user.findUnique({ where: { id } });
 // Bad
 import { PrismaClient } from "@prisma/client";
 ```
