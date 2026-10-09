@@ -1,0 +1,16 @@
+# Copy this file to .cursorignore at the repo root (Cursor protects that file from agent edits).
+# Secrets and local env files: never index or send to the model
+.env*
+!.env.example
+*.pem
+*.key
+infra/cdk.context.json
+
+# Build output and generated code
+.next/
+out/
+coverage/
+playwright-report/
+test-results/
+infra/cdk.out/
+src/generated/
