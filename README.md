@@ -29,6 +29,23 @@ pnpm dev                      # http://localhost:3000
 | `pnpm db:migrate`                              | Create/apply Prisma migrations in dev              |
 | `pnpm --filter infra synth`                    | Synthesize the AWS CDK stacks                      |
 
+## CI and the container image
+
+Every PR runs `.github/workflows/ci.yml`: **verify** (format, lint, typecheck, unit tests, `pnpm audit`), **e2e** (Playwright against a Postgres service), and **docker** (build the image and hit `/api/health`). CodeQL runs on PRs and weekly; Dependabot opens grouped update PRs every Monday. Bugbot follows `.cursor/BUGBOT.md`.
+
+Build and run the production image locally:
+
+```bash
+docker build -t hockey-iq:local .
+# Migrations run as a one-off command in the same image
+docker run --rm -e DATABASE_URL=postgresql://hockey:hockey@host.docker.internal:5434/hockey_iq \
+  hockey-iq:local sh -c "cd /app/migrate && node_modules/.bin/prisma migrate deploy"
+docker run --rm -p 3000:3000 -e DATABASE_URL=postgresql://hockey:hockey@host.docker.internal:5434/hockey_iq \
+  -e SESSION_PASSWORD=local-only-session-password-change-me -e COOKIE_SECURE=false hockey-iq:local
+```
+
+`/api/health` is the load balancer check; `/api/health?deep=1` also checks the database.
+
 ## Working in Cursor
 
 Project rules live in `.cursor/rules/`, skills in `.cursor/skills/`, hooks in `.cursor/hooks.json`, and the project MCP config (read-only local Postgres) in `.cursor/mcp.json`. Start with `AGENTS.md`.

@@ -5,6 +5,11 @@ onlyBuiltDependencies:
   - "@prisma/engines"
   - prisma
 
+# Security patches for transitive deps of the Prisma CLI (remove once Prisma ships them).
+overrides:
+  deepmerge-ts: ^8.0.0
+  mysql2: ^3.23.1
+
 ignoredBuiltDependencies:
   - sharp
   - unrs-resolver
