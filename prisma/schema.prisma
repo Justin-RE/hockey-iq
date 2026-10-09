@@ -9,7 +9,9 @@ datasource db {
 
 model User {
   id           String    @id @default(cuid())
-  nickname     String    @unique
+  nickname     String
+  /// Lowercased nickname, so "Ava" and "ava" can't both exist.
+  nicknameKey  String    @unique
   passwordHash String
   createdAt    DateTime  @default(now())
   attempts     Attempt[]
