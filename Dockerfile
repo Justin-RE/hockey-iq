@@ -14,6 +14,10 @@ COPY src/lib/database-url.ts ./src/lib/database-url.ts
 RUN pnpm install --frozen-lockfile --filter hockey-iq
 
 FROM base AS build
+# NEXT_PUBLIC_* values are inlined into the browser bundle at build time.
+ARG APP_VERSION=dev
+ARG NEXT_PUBLIC_SENTRY_DSN=""
+ENV NEXT_PUBLIC_APP_VERSION=$APP_VERSION NEXT_PUBLIC_SENTRY_DSN=$NEXT_PUBLIC_SENTRY_DSN
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/src/generated ./src/generated
 COPY . .

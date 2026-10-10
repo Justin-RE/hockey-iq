@@ -60,7 +60,10 @@ jobs:
           context: .
           push: true
           tags: ${{ steps.ecr.outputs.registry }}/hockey-iq:${{ github.sha }}
-          build-args: APP_VERSION=${{ github.sha }}
+          # The Sentry DSN is public by design (it ships in browser JS), so a repo variable is fine.
+          build-args: |
+            APP_VERSION=${{ github.sha }}
+            NEXT_PUBLIC_SENTRY_DSN=${{ vars.SENTRY_DSN }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 

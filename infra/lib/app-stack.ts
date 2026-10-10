@@ -1,11 +1,14 @@
 import { CfnOutput, Duration, Stack, type StackProps } from "aws-cdk-lib";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
+import * as cloudwatch from "aws-cdk-lib/aws-cloudwatch";
 import * as ec2 from "aws-cdk-lib/aws-ec2";
 import * as ecs from "aws-cdk-lib/aws-ecs";
 import * as elbv2 from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import * as logs from "aws-cdk-lib/aws-logs";
+import * as route53 from "aws-cdk-lib/aws-route53";
 import type { Construct } from "constructs";
+import { addAlarm } from "./alarms";
 import { CONTAINER_PORT } from "./config";
 import type { PlatformStack } from "./platform-stack";
 import { databaseEnvironment, logGroupName, releaseImage } from "./task-config";
@@ -61,6 +64,10 @@ export class AppStack extends Stack {
       },
     });
     const { environment, secrets } = databaseEnvironment(platform, imageTag);
+    const logGroup = new logs.LogGroup(this, "Logs", {
+      logGroupName: logGroupName(platform, "app"),
+      retention: config.logRetention,
+    });
     taskDefinition.addContainer("app", {
       image: releaseImage(this, imageTag),
       environment,
@@ -69,13 +76,7 @@ export class AppStack extends Stack {
         SESSION_PASSWORD: ecs.Secret.fromSecretsManager(platform.sessionSecret),
       },
       portMappings: [{ containerPort: CONTAINER_PORT }],
-      logging: ecs.LogDrivers.awsLogs({
-        streamPrefix: "app",
-        logGroup: new logs.LogGroup(this, "Logs", {
-          logGroupName: logGroupName(platform, "app"),
-          retention: config.logRetention,
-        }),
-      }),
+      logging: ecs.LogDrivers.awsLogs({ streamPrefix: "app", logGroup }),
     });
 
     // Immutable import: the ALB target wiring must not add rules to a Platform-stack group.
@@ -113,7 +114,7 @@ export class AppStack extends Stack {
       protocol: elbv2.ApplicationProtocol.HTTP,
       open: false,
     });
-    listener.addTargets("App", {
+    const targetGroup = listener.addTargets("App", {
       port: CONTAINER_PORT,
       protocol: elbv2.ApplicationProtocol.HTTP,
       targets: [service],
@@ -154,8 +155,111 @@ export class AppStack extends Stack {
       },
     });
 
+    this.addMonitoring({ platform, service, targetGroup, distribution, logGroup });
+
     this.url = `https://${distribution.distributionDomainName}`;
     new CfnOutput(this, "Url", { value: this.url });
     new CfnOutput(this, "ServiceName", { value: service.serviceName });
+  }
+
+  private addMonitoring({
+    platform,
+    service,
+    targetGroup,
+    distribution,
+    logGroup,
+  }: {
+    platform: PlatformStack;
+    service: ecs.FargateService;
+    targetGroup: elbv2.ApplicationTargetGroup;
+    distribution: cloudfront.Distribution;
+    logGroup: logs.LogGroup;
+  }) {
+    const { prefix, envName } = platform.config;
+    const topic = platform.alarmTopic;
+    const fiveMinutes = Duration.minutes(5);
+
+    addAlarm(this, "target-5xx", prefix, topic, {
+      description: "The app returned 5 or more 5xx responses in 5 minutes.",
+      metric: targetGroup.metrics.httpCodeTarget(elbv2.HttpCodeTarget.TARGET_5XX_COUNT, {
+        period: fiveMinutes,
+        statistic: "Sum",
+      }),
+      threshold: 5,
+    });
+    addAlarm(this, "latency-p95", prefix, topic, {
+      description: "p95 response time at or above 2 seconds for 15 minutes.",
+      metric: targetGroup.metrics.targetResponseTime({ period: fiveMinutes, statistic: "p95" }),
+      threshold: 2,
+      evaluationPeriods: 3,
+    });
+    addAlarm(this, "unhealthy-tasks", prefix, topic, {
+      description: "At least one task failed ALB health checks for 5 minutes.",
+      metric: targetGroup.metrics.unhealthyHostCount({
+        period: Duration.minutes(1),
+        statistic: "Maximum",
+      }),
+      threshold: 1,
+      evaluationPeriods: 5,
+    });
+    addAlarm(this, "task-cpu", prefix, topic, {
+      description: "Service CPU at or above 80% for 15 minutes.",
+      metric: service.metricCpuUtilization({ period: fiveMinutes }),
+      threshold: 80,
+      evaluationPeriods: 3,
+    });
+    addAlarm(this, "task-memory", prefix, topic, {
+      description: "Service memory at or above 85% for 15 minutes.",
+      metric: service.metricMemoryUtilization({ period: fiveMinutes }),
+      threshold: 85,
+      evaluationPeriods: 3,
+    });
+    addAlarm(this, "cdn-5xx-rate", prefix, topic, {
+      description: "CloudFront 5xx error rate at or above 5% for 10 minutes.",
+      metric: distribution.metric5xxErrorRate({ period: fiveMinutes, statistic: "Average" }),
+      threshold: 5,
+      evaluationPeriods: 2,
+    });
+
+    const errorLogs = new logs.MetricFilter(this, "ErrorLogs", {
+      logGroup,
+      filterPattern: logs.FilterPattern.any(
+        logs.FilterPattern.stringValue("$.level", "=", "error"),
+        logs.FilterPattern.stringValue("$.level", "=", "fatal"),
+      ),
+      metricNamespace: "HockeyIq",
+      metricName: `${envName}-error-logs`,
+      metricValue: "1",
+      unit: cloudwatch.Unit.COUNT,
+    });
+    addAlarm(this, "error-logs", prefix, topic, {
+      description: "3 or more error-level log lines in 5 minutes. Check the app log group.",
+      metric: errorLogs.metric({ period: fiveMinutes, statistic: "Sum" }),
+      threshold: 3,
+    });
+
+    // External uptime check from Route 53's global checkers, through CloudFront.
+    const uptime = new route53.HealthCheck(this, "Uptime", {
+      type: route53.HealthCheckType.HTTPS,
+      fqdn: distribution.distributionDomainName,
+      port: 443,
+      resourcePath: "/api/health",
+      requestInterval: Duration.seconds(30),
+      failureThreshold: 3,
+    });
+    addAlarm(this, "uptime", prefix, topic, {
+      description: "Route 53 health checkers cannot reach /api/health through CloudFront.",
+      metric: new cloudwatch.Metric({
+        namespace: "AWS/Route53",
+        metricName: "HealthCheckStatus",
+        dimensionsMap: { HealthCheckId: uptime.healthCheckId },
+        statistic: "Minimum",
+        period: Duration.minutes(1),
+      }),
+      threshold: 1,
+      comparison: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+      evaluationPeriods: 2,
+      missingData: cloudwatch.TreatMissingData.BREACHING,
+    });
   }
 }

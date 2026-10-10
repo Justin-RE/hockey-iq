@@ -5,6 +5,7 @@ import * as iam from "aws-cdk-lib/aws-iam";
 import * as ssm from "aws-cdk-lib/aws-ssm";
 import type { Construct } from "constructs";
 import {
+  ALERT_EMAIL_PARAMETER,
   APP_NAME,
   ECR_REPOSITORY_NAME,
   ENVIRONMENTS,
@@ -16,8 +17,6 @@ import {
 export interface SharedStackProps extends StackProps {
   /** Monthly cost alert threshold in USD. */
   monthlyBudgetUsd: number;
-  /** SSM parameter (String) holding the alert email, so it stays out of the public repo. */
-  budgetEmailParameter: string;
 }
 
 /**
@@ -50,7 +49,7 @@ export class SharedStack extends Stack {
       production: this.deployRole(github, "production", { canPushImages: false }),
     };
 
-    const email = ssm.StringParameter.valueForStringParameter(this, props.budgetEmailParameter);
+    const email = ssm.StringParameter.valueForStringParameter(this, ALERT_EMAIL_PARAMETER);
     const subscribers = [{ subscriptionType: "EMAIL", address: email }];
     new budgets.CfnBudget(this, "MonthlyBudget", {
       budget: {

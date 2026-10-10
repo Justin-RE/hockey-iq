@@ -11,11 +11,7 @@ const env = { account: "123456789012", region: REGION };
 
 function build() {
   const app = new App();
-  const shared = new SharedStack(app, "Shared", {
-    env,
-    monthlyBudgetUsd: 100,
-    budgetEmailParameter: "/hockey-iq/budget-email",
-  });
+  const shared = new SharedStack(app, "Shared", { env, monthlyBudgetUsd: 100 });
   const stacks = { shared } as Record<string, Stack> & { shared: SharedStack };
   for (const envName of ["staging", "production"] as EnvName[]) {
     const platform = new PlatformStack(app, `${envName}-platform`, {
@@ -112,7 +108,7 @@ describe("shared stack", () => {
     expect(JSON.stringify(t.toJSON())).not.toMatch(/@[a-z0-9-]+\.[a-z]+/i);
     t.hasParameter("*", {
       Type: "AWS::SSM::Parameter::Value<String>",
-      Default: "/hockey-iq/budget-email",
+      Default: "/hockey-iq/alert-email",
     });
   });
 });
@@ -209,6 +205,69 @@ describe("app stacks", () => {
     );
     expect(envNames).not.toEqual(expect.arrayContaining(["DB_PASSWORD"]));
     expect(envNames).not.toContain("SESSION_PASSWORD");
+  });
+});
+
+describe("monitoring", () => {
+  it.each(["staging", "production"])(
+    "%s has the expected alarms, all wired to email",
+    (envName) => {
+      const alarms = {
+        ...template(`${envName}-platform`).findResources("AWS::CloudWatch::Alarm"),
+        ...template(`${envName}-app`).findResources("AWS::CloudWatch::Alarm"),
+      };
+      const names = Object.values(alarms).map((a) => a.Properties.AlarmName);
+      const prefix = `hockey-iq-${envName}`;
+      expect(names.sort()).toEqual(
+        [
+          "cdn-5xx-rate",
+          "db-cpu",
+          "db-free-storage",
+          "error-logs",
+          "latency-p95",
+          "target-5xx",
+          "task-cpu",
+          "task-memory",
+          "unhealthy-tasks",
+          "uptime",
+        ].map((n) => `${prefix}-${n}`),
+      );
+      for (const alarm of Object.values(alarms)) {
+        expect(alarm.Properties.AlarmActions).toHaveLength(1);
+        expect(alarm.Properties.OKActions).toHaveLength(1);
+      }
+    },
+  );
+
+  it("emails the address stored in SSM, not one in the template", () => {
+    const t = template("staging-platform");
+    t.hasResourceProperties("AWS::SNS::Subscription", {
+      Protocol: "email",
+      Endpoint: { Ref: Match.stringLikeRegexp("SsmParameterValue") },
+    });
+    for (const stack of Object.values(stacks)) {
+      expect(JSON.stringify(Template.fromStack(stack).toJSON())).not.toMatch(
+        /[\w.+-]+@[\w-]+\.[a-z]{2,}/i,
+      );
+    }
+  });
+
+  it("checks uptime over HTTPS through CloudFront", () => {
+    template("staging-app").hasResourceProperties("AWS::Route53::HealthCheck", {
+      HealthCheckConfig: Match.objectLike({
+        Type: "HTTPS",
+        ResourcePath: "/api/health",
+        Port: 443,
+        RequestInterval: 30,
+        FailureThreshold: 3,
+      }),
+    });
+  });
+
+  it("counts error-level JSON logs", () => {
+    template("staging-app").hasResourceProperties("AWS::Logs::MetricFilter", {
+      FilterPattern: Match.stringLikeRegexp('\\$\\.level = "error"'),
+    });
   });
 });
 

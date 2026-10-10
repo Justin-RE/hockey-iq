@@ -26,6 +26,15 @@ flowchart LR
 | `HockeyIq-<Env>-Migrate`  | Fargate task definition that runs `prisma migrate deploy`             | every release (new image tag) |
 | `HockeyIq-<Env>-App`      | Fargate service, internal ALB, CloudFront distribution                | every release (new image tag) |
 
+## Monitoring
+
+- **Logs**: pino JSON to stdout, shipped to CloudWatch Logs `/hockey-iq/<env>/app`. Unhandled request errors are logged by `onRequestError` in `src/instrumentation.ts`.
+- **Errors**: Sentry, server and browser, with no personal data (ADR 0007). Off when no DSN is set.
+- **Alarms** (email via the `hockey-iq-<env>-alarms` SNS topic, on alarm and on recovery): ALB 5xx count, p95 latency, unhealthy tasks, task CPU and memory, CloudFront 5xx rate, error-level log lines, database CPU and free storage, and a Route 53 HTTPS uptime check on `/api/health`.
+- **Cost**: AWS Budgets alerts at 80% and 100% of $100/month.
+
+What to do when an alarm fires: `docs/runbooks/incident-response.md`.
+
 Release flow and rollback: `docs/runbooks/deploy-and-rollback.md`. First-time setup: `docs/setup/aws-account.md`.
 
 ## Application layers

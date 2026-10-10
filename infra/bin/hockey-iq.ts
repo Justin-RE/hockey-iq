@@ -8,11 +8,7 @@ import { SharedStack } from "../lib/shared-stack";
 const app = new App();
 const env = { account: process.env.CDK_DEFAULT_ACCOUNT, region: REGION };
 
-new SharedStack(app, stackName("shared", "Core"), {
-  env,
-  monthlyBudgetUsd: 100,
-  budgetEmailParameter: `/${APP_NAME}/budget-email`,
-});
+new SharedStack(app, stackName("shared", "Core"), { env, monthlyBudgetUsd: 100 });
 
 // Environment stacks need a release image, so they only exist when one is given:
 //   cdk deploy HockeyIq-Staging-App -c imageTag=<git sha>
