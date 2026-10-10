@@ -13,6 +13,9 @@ export function resolveDatabaseUrl(env: Env = process.env): string | undefined {
 
   const user = encodeURIComponent(DB_USER);
   const password = encodeURIComponent(DB_PASSWORD);
-  const ssl = env.DB_SSL === "false" ? "" : "?sslmode=require";
+  // verify-full needs the RDS CA bundle, which the Dockerfile installs via NODE_EXTRA_CA_CERTS.
+  // Prisma's migration engine ignores verify-full, so the migrate task sets DB_SSLMODE=require.
+  const sslmode = env.DB_SSLMODE ?? "verify-full";
+  const ssl = env.DB_SSL === "false" ? "" : `?sslmode=${sslmode}`;
   return `postgresql://${user}:${password}@${DB_HOST}:${DB_PORT ?? "5432"}/${DB_NAME}${ssl}`;
 }

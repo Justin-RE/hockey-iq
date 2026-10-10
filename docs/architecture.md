@@ -4,15 +4,29 @@
 
 ```mermaid
 flowchart LR
-  Browser --> ALB["Application Load Balancer (HTTPS)"]
+  Browser -->|HTTPS| CF["CloudFront (*.cloudfront.net)"]
+  CF -->|VPC origin| ALB["Internal ALB"]
   ALB --> App["Next.js container on ECS Fargate"]
-  App --> DB[(RDS Postgres)]
+  App -->|TLS verify-full| DB[(RDS Postgres)]
   App --> Secrets[Secrets Manager]
   App --> Logs[CloudWatch Logs]
   App --> Sentry
-  GitHub[GitHub Actions] -->|OIDC role| CDK[CDK deploy]
-  CDK --> ALB
+  GitHub[GitHub Actions] -->|OIDC role| ECR[ECR image]
+  GitHub -->|OIDC role| CDK[CDK deploy]
+  CDK --> Migrate["One-off migration task"]
+  Migrate --> DB
 ```
+
+## Infrastructure (`infra/`)
+
+| Stack                     | Contents                                                              | Changes when                  |
+| ------------------------- | --------------------------------------------------------------------- | ----------------------------- |
+| `HockeyIq-Shared-Core`    | ECR repository, GitHub OIDC provider and deploy roles, monthly budget | rarely, deployed by hand      |
+| `HockeyIq-<Env>-Platform` | VPC, RDS Postgres, Secrets Manager secrets, ECS cluster               | infrastructure changes        |
+| `HockeyIq-<Env>-Migrate`  | Fargate task definition that runs `prisma migrate deploy`             | every release (new image tag) |
+| `HockeyIq-<Env>-App`      | Fargate service, internal ALB, CloudFront distribution                | every release (new image tag) |
+
+Release flow and rollback: `docs/runbooks/deploy-and-rollback.md`. First-time setup: `docs/setup/aws-account.md`.
 
 ## Application layers
 
@@ -42,10 +56,10 @@ Scenario content is not stored in the database. Attempts reference scenarios by 
 
 ## Environments
 
-| Env     | Trigger                   | Notes                                                         |
-| ------- | ------------------------- | ------------------------------------------------------------- |
-| local   | `pnpm dev`                | Postgres via `docker compose`                                 |
-| staging | every merge to `main`     | smaller, no NAT gateway, tasks in public subnets              |
-| prod    | manual approval in GitHub | private subnets, deletion protection, longer backup retention |
+| Env     | Trigger                   | Notes                                                                        |
+| ------- | ------------------------- | ---------------------------------------------------------------------------- |
+| local   | `pnpm dev`                | Postgres via `docker compose`                                                |
+| staging | every merge to `main`     | 1 small task in public subnets (no NAT gateway), single-AZ DB, 7-day backups |
+| prod    | manual approval in GitHub | 2 tasks in private subnets, Multi-AZ DB, deletion protection, 14-day backups |
 
 See `docs/adr/` for the reasons behind these choices.

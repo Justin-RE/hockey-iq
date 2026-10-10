@@ -27,7 +27,7 @@ pnpm dev                      # http://localhost:3000
 | `pnpm test`                                    | Vitest unit tests                                  |
 | `pnpm e2e`                                     | Playwright end-to-end tests (needs the DB running) |
 | `pnpm db:migrate`                              | Create/apply Prisma migrations in dev              |
-| `pnpm --filter infra synth`                    | Synthesize the AWS CDK stacks                      |
+| `pnpm --filter infra test`                     | AWS CDK stack assertions (IAM, network, database)  |
 
 ## CI and the container image
 
@@ -45,6 +45,10 @@ docker run --rm -p 3000:3000 -e DATABASE_URL=postgresql://hockey:hockey@host.doc
 ```
 
 `/api/health` is the load balancer check; `/api/health?deep=1` also checks the database.
+
+## Deploying to AWS
+
+Infrastructure is AWS CDK in `infra/` (ECS Fargate, RDS Postgres, CloudFront; see `docs/architecture.md`). Merges to `main` deploy to staging through `.github/workflows/deploy.yml`; production needs an approval in GitHub. First-time account setup is in `docs/setup/aws-account.md`, and releases and rollbacks are in `docs/runbooks/deploy-and-rollback.md`.
 
 ## Working in Cursor
 

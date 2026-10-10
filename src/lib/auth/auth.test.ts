@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CredentialsSchema, NicknameSchema } from "./credentials";
 import { hashPassword, verifyPassword } from "./password";
-import { createRateLimiter } from "./rate-limit";
+import { clientIpFromHeaders, createRateLimiter } from "./rate-limit";
 
 describe("password hashing", () => {
   it("verifies the right password and rejects the wrong one", async () => {
@@ -45,5 +45,27 @@ describe("rate limiter", () => {
     expect(check("k", 20)).toEqual({ allowed: false, retryAfterMs: 980 });
     expect(check("other", 20).allowed).toBe(true);
     expect(check("k", 1001).allowed).toBe(true);
+  });
+});
+
+describe("clientIpFromHeaders", () => {
+  it("prefers CloudFront-Viewer-Address over a spoofable X-Forwarded-For", () => {
+    const headers = new Headers({
+      "cloudfront-viewer-address": "203.0.113.7:51234",
+      "x-forwarded-for": "1.1.1.1, 203.0.113.7",
+    });
+    expect(clientIpFromHeaders(headers)).toBe("203.0.113.7");
+  });
+
+  it("handles IPv6 viewer addresses", () => {
+    const headers = new Headers({ "cloudfront-viewer-address": "2001:db8::1:443" });
+    expect(clientIpFromHeaders(headers)).toBe("2001:db8::1");
+  });
+
+  it("falls back to the first X-Forwarded-For entry, then 'unknown'", () => {
+    expect(clientIpFromHeaders(new Headers({ "x-forwarded-for": "10.0.0.1, 10.0.0.2" }))).toBe(
+      "10.0.0.1",
+    );
+    expect(clientIpFromHeaders(new Headers())).toBe("unknown");
   });
 });

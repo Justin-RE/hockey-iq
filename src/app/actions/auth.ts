@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@/generated/prisma/client";
 import { CredentialsSchema } from "@/lib/auth/credentials";
 import { hashPassword, verifyPassword } from "@/lib/auth/password";
-import { createRateLimiter } from "@/lib/auth/rate-limit";
+import { clientIpFromHeaders, createRateLimiter } from "@/lib/auth/rate-limit";
 import { getSession } from "@/lib/auth/session";
 import { getDb } from "@/lib/db";
 import { logger } from "@/lib/logger";
@@ -21,8 +21,7 @@ const DUMMY_HASH =
   "scrypt$16384$8$1$AAAAAAAAAAAAAAAAAAAAAA==$" + Buffer.alloc(64).toString("base64");
 
 async function clientIp(): Promise<string> {
-  const forwarded = (await headers()).get("x-forwarded-for");
-  return forwarded?.split(",")[0]?.trim() || "unknown";
+  return clientIpFromHeaders(await headers());
 }
 
 function parse(formData: FormData) {

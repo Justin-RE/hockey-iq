@@ -32,6 +32,9 @@ FROM node:22-alpine AS runner
 RUN apk add --no-cache openssl && addgroup -S app && adduser -S app -G app
 WORKDIR /app
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=0.0.0.0
+# Amazon RDS CA bundle so node-postgres can verify the database certificate (sslmode=verify-full).
+ADD --chmod=644 https://truststore.pki.rds.amazonaws.com/global/global-bundle.pem /etc/ssl/certs/rds-global-bundle.pem
+ENV NODE_EXTRA_CA_CERTS=/etc/ssl/certs/rds-global-bundle.pem
 ARG APP_VERSION=dev
 ENV APP_VERSION=$APP_VERSION
 
