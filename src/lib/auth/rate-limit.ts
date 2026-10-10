@@ -1,4 +1,18 @@
 /**
+ * Client IP for rate limiting. In AWS, CloudFront sets `CloudFront-Viewer-Address`
+ * ("ip:port") and overwrites any value the client sends. The first `X-Forwarded-For`
+ * entry is client-controlled behind CloudFront, so it is only a local fallback.
+ */
+export function clientIpFromHeaders(headers: Pick<Headers, "get">): string {
+  const viewer = headers.get("cloudfront-viewer-address");
+  if (viewer) {
+    const sep = viewer.lastIndexOf(":");
+    return sep > 0 ? viewer.slice(0, sep) : viewer;
+  }
+  return headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+}
+
+/**
  * In-process fixed-window limiter. Good enough for one or two tasks;
  * replace with a shared store (e.g. ElastiCache) before scaling out (ADR 0004).
  */

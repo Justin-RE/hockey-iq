@@ -16,7 +16,7 @@ function sessionOptions(): SessionOptions {
     ttl: 60 * 60 * 24 * 30,
     cookieOptions: {
       httpOnly: true,
-      // Off only for HTTP-only environments (local e2e, staging without a domain).
+      // Off only for HTTP-only environments (local e2e, the local container).
       secure: process.env.COOKIE_SECURE !== "false" && process.env.NODE_ENV === "production",
       sameSite: "lax",
       path: "/",

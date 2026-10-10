@@ -1,0 +1,73 @@
+name: Deploy environment
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        description: staging or production
+        type: string
+        required: true
+      image_tag:
+        description: Image tag (git SHA) already pushed to ECR
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: deploy (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: ${{ inputs.environment }}
+      url: ${{ steps.smoke.outputs.url }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      ENV_NAME: ${{ inputs.environment }}
+      IMAGE_TAG: ${{ inputs.image_tag }}
+      STACK_PREFIX: ${{ inputs.environment == 'production' && 'HockeyIq-Production' || 'HockeyIq-Staging' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --filter infra
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/hockey-iq-github-${{ inputs.environment }}
+          aws-region: us-east-1
+
+      - name: Check the image exists
+        run: aws ecr describe-images --repository-name hockey-iq --image-ids imageTag="$IMAGE_TAG" >/dev/null
+
+      - name: Deploy platform and migration task definition
+        working-directory: infra
+        run: >
+          pnpm exec cdk deploy "$STACK_PREFIX-Platform" "$STACK_PREFIX-Migrate"
+          -c imageTag="$IMAGE_TAG" --require-approval never --outputs-file cdk-outputs.json
+
+      - name: Run database migrations
+        run: bash infra/scripts/run-migration.sh infra/cdk-outputs.json "$STACK_PREFIX-Migrate"
+
+      - name: Deploy web service
+        working-directory: infra
+        run: >
+          pnpm exec cdk deploy "$STACK_PREFIX-App" --exclusively
+          -c imageTag="$IMAGE_TAG" --require-approval never --outputs-file cdk-outputs-app.json
+
+      - name: Smoke test
+        id: smoke
+        run: |
+          url=$(jq -er --arg s "$STACK_PREFIX-App" '.[$s].Url' infra/cdk-outputs-app.json)
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          curl -fsS --retry 12 --retry-delay 10 --retry-all-errors "$url/api/health?deep=1" \
+            | tee /dev/stderr \
+            | jq -e --arg v "$IMAGE_TAG" '.version == $v and .database == "ok"' >/dev/null
+          echo "### Deployed \`$IMAGE_TAG\` to $ENV_NAME: $url" >> "$GITHUB_STEP_SUMMARY"

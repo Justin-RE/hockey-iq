@@ -1,0 +1,93 @@
+name: Deploy
+
+# Every merge to main builds one image and deploys it to staging. Production
+# reuses the same image after a required reviewer approves the GitHub
+# environment. Rollback = run this workflow manually with an older image tag.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment to deploy
+        type: choice
+        options: [staging, production]
+        default: staging
+      image_tag:
+        description: Existing image tag (git SHA) to deploy or roll back to. Empty = build this commit.
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-${{ github.event_name == 'push' && 'main' || inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  image:
+    name: build image
+    if: vars.AWS_ACCOUNT_ID != '' && (github.event_name == 'push' || inputs.image_tag == '')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    # The staging role is the only one allowed to push images.
+    environment: staging
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      tag: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/hockey-iq-github-staging
+          aws-region: us-east-1
+      - id: ecr
+        uses: aws-actions/amazon-ecr-login@03f1aad4c6c7ffd436567f42f9384779290529bd # v2.1.7
+      - name: Skip if this commit was already pushed (tags are immutable)
+        id: exists
+        run: |
+          if aws ecr describe-images --repository-name hockey-iq --image-ids imageTag="$GITHUB_SHA" >/dev/null 2>&1; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.exists.outputs.found != 'true'
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+      - if: steps.exists.outputs.found != 'true'
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.ecr.outputs.registry }}/hockey-iq:${{ github.sha }}
+          build-args: APP_VERSION=${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  staging:
+    needs: image
+    if: >-
+      always() && vars.AWS_ACCOUNT_ID != '' &&
+      (needs.image.result == 'success' || needs.image.result == 'skipped') &&
+      (github.event_name == 'push' || inputs.environment == 'staging')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-environment.yml
+    with:
+      environment: staging
+      image_tag: ${{ inputs.image_tag || needs.image.outputs.tag }}
+
+  production:
+    needs: [image, staging]
+    if: >-
+      always() && !failure() && !cancelled() &&
+      vars.AWS_ACCOUNT_ID != '' && vars.PRODUCTION_ENABLED == 'true' &&
+      (github.event_name == 'push' || inputs.environment == 'production')
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/deploy-environment.yml
+    with:
+      environment: production
+      image_tag: ${{ inputs.image_tag || needs.image.outputs.tag }}
