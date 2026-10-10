@@ -10,5 +10,6 @@ Flag these as bugs (high priority):
 - Imports of React, Next.js, or Phaser inside `src/game/engine/`.
 - Scenario data where rules content is wrong for FIH/NFHS girls' field hockey, or where the `correct` choice contradicts the `explanation`.
 - IAM policies in `infra/` with `*` actions on `*` resources.
+- GitHub Actions referenced by tag instead of a full commit SHA (`uses: owner/action@<sha> # vX.Y.Z`).
 
 Don't comment on formatting (Prettier enforces it) or on Tailwind class order.
