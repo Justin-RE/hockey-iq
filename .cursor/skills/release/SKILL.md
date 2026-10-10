@@ -53,4 +53,9 @@ gh release create vX.Y.Z --title "vX.Y.Z" --notes-file <(sed -n '/## \[X.Y.Z\]/,
 
 ## Rollback
 
-If prod is unhealthy after deploy, follow `docs/runbooks/rollback.md`. Do not hotfix directly on main.
+If prod is unhealthy after deploy, follow `docs/runbooks/deploy-and-rollback.md`. Do not hotfix directly on main.
+
+## Notes
+
+- Production deploys only run when the repo variable `PRODUCTION_ENABLED` is `true`. If it isn't set yet, the release is still tagged and published, and production is deployed later with `gh workflow run deploy.yml -f environment=production -f image_tag=<release commit SHA>`.
+- The release commit's image must already exist in ECR (built when it merged to `main`). The deploy fails fast with "Check the image exists" otherwise.
