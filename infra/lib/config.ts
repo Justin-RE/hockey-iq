@@ -8,6 +8,8 @@ export const GITHUB_REPO = "Justin-RE/hockey-iq";
 export const ECR_REPOSITORY_NAME = APP_NAME;
 export const DB_NAME = "hockey_iq";
 export const CONTAINER_PORT = 3000;
+/** SSM String parameter with the operator's email for budget and alarm notifications. */
+export const ALERT_EMAIL_PARAMETER = `/${APP_NAME}/alert-email`;
 
 export type EnvName = "staging" | "production";
 

@@ -34,8 +34,8 @@ Sessions expire; run `aws sso login --profile hockey-iq` to refresh.
 
 ```bash
 export AWS_PROFILE=hockey-iq
-# Budget alerts go to this address. Stored in SSM so it stays out of the public repo.
-aws ssm put-parameter --name /hockey-iq/budget-email --type String --value "<your email>"
+# Budget and alarm emails go to this address. Stored in SSM so it stays out of the public repo.
+aws ssm put-parameter --name /hockey-iq/alert-email --type String --value "<your email>"
 
 cd infra
 pnpm exec cdk bootstrap aws://$(aws sts get-caller-identity --query Account --output text)/us-east-1
@@ -60,6 +60,20 @@ gh run watch
 ```
 
 The first run takes 20-30 minutes (RDS and CloudFront creation). Later deploys take 5-10 minutes. The URL is on the run summary and in the `HockeyIq-Staging-App` stack outputs.
+
+AWS sends a "Subscription Confirmation" email for the `hockey-iq-staging-alarms` topic. Confirm it, or alarms won't reach you.
+
+## 7. Sentry (error tracking)
+
+1. Create a free account at <https://sentry.io/> and a **Next.js** project named `hockey-iq`.
+2. Project **Settings → Security & Privacy**: turn on **Prevent Storing of IP Addresses**, **Data Scrubber**, and **Use Default Scrubbers** (ADR 0007).
+3. Copy the DSN (**Settings → Client Keys**). It's public by design, so a repository variable is fine:
+
+   ```bash
+   gh variable set SENTRY_DSN --body "<dsn>"
+   ```
+
+4. The next deploy bakes it into the image. Locally, put it in `.env.local` as `NEXT_PUBLIC_SENTRY_DSN` if you want to test.
 
 ## Costs to expect (staging)
 
