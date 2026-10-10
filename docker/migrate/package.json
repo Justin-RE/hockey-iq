@@ -1,0 +1,13 @@
+{
+  "name": "hockey-iq-migrate",
+  "private": true,
+  "description": "Prisma CLI bundled into the image for the one-off migration task. Keep versions in sync with the root package.json.",
+  "dependencies": {
+    "dotenv": "^18.0.7",
+    "prisma": "7.10.0"
+  },
+  "overrides": {
+    "deepmerge-ts": "^8.0.0",
+    "mysql2": "^3.23.1"
+  }
+}
