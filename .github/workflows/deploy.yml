@@ -1,11 +1,13 @@
 name: Deploy
 
-# Every merge to main builds one image and deploys it to staging. Production
-# reuses the same image after a required reviewer approves the GitHub
-# environment. Rollback = run this workflow manually with an older image tag.
+# Every merge to main builds one image and deploys it to staging. Publishing a
+# GitHub Release deploys that commit's image to production after a required
+# reviewer approves the environment. Rollback = run manually with an older tag.
 on:
   push:
     branches: [main]
+  release:
+    types: [published]
   workflow_dispatch:
     inputs:
       environment:
@@ -22,13 +24,15 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-${{ github.event_name == 'push' && 'main' || inputs.environment }}
+  group: deploy-${{ github.event_name == 'push' && 'staging' || github.event_name == 'release' && 'production' || inputs.environment }}
   cancel-in-progress: false
 
 jobs:
   image:
     name: build image
-    if: vars.AWS_ACCOUNT_ID != '' && (github.event_name == 'push' || inputs.image_tag == '')
+    if: >-
+      vars.AWS_ACCOUNT_ID != '' &&
+      (github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.image_tag == ''))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     # The staging role is the only one allowed to push images.
@@ -82,15 +86,16 @@ jobs:
       image_tag: ${{ inputs.image_tag || needs.image.outputs.tag }}
 
   production:
-    needs: [image, staging]
+    needs: image
     if: >-
       always() && !failure() && !cancelled() &&
       vars.AWS_ACCOUNT_ID != '' && vars.PRODUCTION_ENABLED == 'true' &&
-      (github.event_name == 'push' || inputs.environment == 'production')
+      (github.event_name == 'release' || inputs.environment == 'production')
     permissions:
       contents: read
       id-token: write
     uses: ./.github/workflows/deploy-environment.yml
     with:
       environment: production
-      image_tag: ${{ inputs.image_tag || needs.image.outputs.tag }}
+      # A release deploys the image CI built when its commit merged to main.
+      image_tag: ${{ inputs.image_tag || needs.image.outputs.tag || github.sha }}

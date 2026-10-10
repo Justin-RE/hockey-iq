@@ -50,6 +50,12 @@ docker run --rm -p 3000:3000 -e DATABASE_URL=postgresql://hockey:hockey@host.doc
 
 Infrastructure is AWS CDK in `infra/` (ECS Fargate, RDS Postgres, CloudFront; see `docs/architecture.md`). Merges to `main` deploy to staging through `.github/workflows/deploy.yml`; production needs an approval in GitHub. First-time account setup is in `docs/setup/aws-account.md`, and releases and rollbacks are in `docs/runbooks/deploy-and-rollback.md`.
 
+## Operating it
+
+- Runbooks: `docs/runbooks/` (deploy and rollback, incident response, database restore, rotating secrets)
+- Weekly, monthly, and quarterly upkeep: `docs/maintenance.md`
+- Releases: `CHANGELOG.md` and the `release` skill (`/release` in Cursor's agent chat)
+
 ## Working in Cursor
 
 Project rules live in `.cursor/rules/`, skills in `.cursor/skills/`, hooks in `.cursor/hooks.json`, and the project MCP config (read-only local Postgres) in `.cursor/mcp.json`. Start with `AGENTS.md`.

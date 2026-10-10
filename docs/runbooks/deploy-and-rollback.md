@@ -9,7 +9,7 @@
    2. `infra/scripts/run-migration.sh` runs `prisma migrate deploy` as a one-off Fargate task and fails the deploy if it exits non-zero.
    3. `cdk deploy HockeyIq-Staging-App` rolls the web service. The ECS circuit breaker rolls back automatically if new tasks fail health checks.
    4. Smoke test: `GET <url>/api/health?deep=1` must report the new `version` and `database: ok`.
-4. **Production** runs the same steps with the same image, only when the repo variable `PRODUCTION_ENABLED` is `true`, and only after a required reviewer approves the `production` environment in GitHub.
+4. **Production** runs when a GitHub Release is published (see the `release` skill in `.cursor/skills/release/`). It runs the same steps with the image built for the release commit, only when the repo variable `PRODUCTION_ENABLED` is `true`, and only after a required reviewer approves the `production` environment in GitHub.
 
 Watch it: GitHub → Actions → Deploy. The deployed URL is linked on the run summary.
 
