@@ -21,9 +21,10 @@ Activation removes the spend limit. The $100/month budget from step 4 emails you
 The organization still has an AWS-written service control policy (SCP) that only allows global services (IAM, CloudFront, Route 53, and similar) in us-east-1. ECS, RDS, and CloudFormation are blocked there until you edit it.
 
 1. <https://settings.aws.com> → **Projects** → **Manage this organization** (in the activation banner, or the management account card) → **Manage policies**. This opens AWS Organizations in the management account.
-2. **Service control policies** → open the policy whose statements include `UsEast1Partitional` and `RegionFloor` → **Edit policy**.
+2. **Policies** → **Service control policies** → `AdvancedModeRegionRestrictionSecurityControlPolicy` (its statements include `UsEast1Partitional` and `RegionFloor`) → **Edit policy**.
 3. Delete the `UsEast1Partitional` statement, and `DenyUsEast1WafResourceAssociation` if it's there. **Keep `RegionFloor`**: it still blocks every Region except us-east-1, us-west-2, and your home Region.
 4. **Save changes**.
+5. **AWS accounts** → your project account → **Policies**: confirm none of the `BudgetsSpendLimit…` policies is attached. `BudgetsSpendLimitDenyNewWorkloads` blocks CloudFormation, ECS, and RDS creation.
 
 ## 3. Sign in from the CLI
 
