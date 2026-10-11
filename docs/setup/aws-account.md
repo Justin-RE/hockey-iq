@@ -31,10 +31,9 @@ The organization still has an AWS-written service control policy (SCP) that only
 `aws login` needs AWS CLI 2.32 or later (`aws --version`).
 
 ```bash
+aws configure set region us-east-1 --profile hockey-iq   # set first; pressing Enter at login's Region prompt doesn't accept the default
 aws login --profile hockey-iq
 #   A browser opens. Sign in with your Builder ID and choose the project account from step 1, not the management account.
-#   If it asks for a Region, enter us-east-1.
-aws configure set region us-east-1 --profile hockey-iq
 aws sts get-caller-identity --profile hockey-iq   # Account must match the project account ID
 ```
 
