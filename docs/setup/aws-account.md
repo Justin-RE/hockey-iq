@@ -2,33 +2,42 @@
 
 Do these steps by hand, in order. After step 6, every merge to `main` deploys staging automatically.
 
-## 1. Create the account and secure the root user
+These steps assume an account created with **Sign up for AWS (new)**: you sign in with an AWS Builder ID, and the console shows projects, a team, and a spend limit. That experience doesn't support IAM Identity Center, Organizations, or deploying regional services to us-east-1. Activating advanced features turns it into a standard AWS Organization that you control. (If you signed up with **Sign up for AWS (advanced)** instead, secure the root user with MFA, sign in to the CLI with `aws login`, and skip to step 4.)
 
-1. Sign up at <https://aws.amazon.com/> (needs an email address, a payment card, and phone verification).
-2. Sign in as root, then **IAM → Security credentials**: turn on MFA for root (passkey or authenticator app).
-3. Don't create access keys for root. After step 2 you won't use root day to day.
+## 1. Activate advanced features
 
-## 2. Turn on IAM Identity Center (single sign-on)
+Activation can't be undone.
 
-1. Console → **IAM Identity Center** → Enable (region: **us-east-1**).
-2. **Users** → Add user for yourself, then set up MFA when you accept the invite.
-3. **Permission sets** → Create → Predefined → `AdministratorAccess`. Set session duration to 4 hours.
-4. **AWS accounts** → select your account → Assign users → you → `AdministratorAccess`.
-5. Copy the **AWS access portal URL** from the Identity Center dashboard.
+1. Turn on MFA for your Builder ID: <https://profile.aws.amazon.com/> → **Security** → register a passkey or authenticator app.
+2. At <https://settings.aws.com> → **Project** → **Overview** → **Additional Info**, note the project's **AWS account ID** and **Region**. HockeyIQ deploys into this project account, never into the management account.
+3. **Projects** → **Actions** → **Explore advanced features**. Enter a team name, choose and verify a management account email, then **Review and complete activation** → **Activate**.
+4. Set the management account's root password. You aren't prompted for it: at <https://console.aws.amazon.com/> choose **Sign in using root user email**, enter the management account email, choose **Forgot your password?**, and follow the email from `@verify.signin.aws`. Then sign in as root and turn on MFA (account menu → **Security credentials**). Root is for emergencies only; don't create access keys for it.
+5. Keep **AWS Builder ID** as the identity source. Switching to another identity source can't be undone.
 
-## 3. Configure the CLI profile
+Activation removes the spend limit. The $100/month budget from step 4 emails you instead.
+
+## 2. Allow regional services in us-east-1
+
+The organization still has an AWS-written service control policy (SCP) that only allows global services (IAM, CloudFront, Route 53, and similar) in us-east-1. ECS, RDS, and CloudFormation are blocked there until you edit it.
+
+1. <https://settings.aws.com> → **Projects** → **Manage this organization** (in the activation banner, or the management account card) → **Manage policies**. This opens AWS Organizations in the management account.
+2. **Policies** → **Service control policies** → `AdvancedModeRegionRestrictionSecurityControlPolicy` (its statements include `UsEast1Partitional` and `RegionFloor`) → **Edit policy**.
+3. Delete the `UsEast1Partitional` statement, and `DenyUsEast1WafResourceAssociation` if it's there. **Keep `RegionFloor`**: it still blocks every Region except us-east-1, us-west-2, and your home Region.
+4. **Save changes**.
+5. **AWS accounts** → your project account → **Policies**: confirm none of the `BudgetsSpendLimit…` policies is attached. `BudgetsSpendLimitDenyNewWorkloads` blocks CloudFormation, ECS, and RDS creation.
+
+## 3. Sign in from the CLI
+
+`aws login` needs AWS CLI 2.32 or later (`aws --version`).
 
 ```bash
-aws configure sso --profile hockey-iq
-#   SSO session name: hockey-iq
-#   SSO start URL:   <access portal URL from step 2>
-#   SSO region:      us-east-1
-#   Scopes:          (press Enter)
-#   Then choose the account and AdministratorAccess role; default region us-east-1, output json.
-aws sts get-caller-identity --profile hockey-iq
+aws configure set region us-east-1 --profile hockey-iq   # set first; pressing Enter at login's Region prompt doesn't accept the default
+aws login --profile hockey-iq
+#   A browser opens. Sign in with your Builder ID and choose the project account from step 1, not the management account.
+aws sts get-caller-identity --profile hockey-iq   # Account must match the project account ID
 ```
 
-Sessions expire; run `aws sso login --profile hockey-iq` to refresh.
+The CDK CLI uses these credentials directly. When the session expires, run `aws login --profile hockey-iq` again.
 
 ## 4. Bootstrap CDK and deploy the shared stack
 
