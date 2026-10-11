@@ -11,7 +11,7 @@ Activation can't be undone.
 1. Turn on MFA for your Builder ID: <https://profile.aws.amazon.com/> → **Security** → register a passkey or authenticator app.
 2. At <https://settings.aws.com> → **Project** → **Overview** → **Additional Info**, note the project's **AWS account ID** and **Region**. HockeyIQ deploys into this project account, never into the management account.
 3. **Projects** → **Actions** → **Explore advanced features**. Enter a team name, choose and verify a management account email, then **Review and complete activation** → **Activate**.
-4. Set the management account's root password when prompted and turn on MFA for that root user. Root is for emergencies only; don't create access keys for it.
+4. Set the management account's root password. You aren't prompted for it: at <https://console.aws.amazon.com/> choose **Sign in using root user email**, enter the management account email, choose **Forgot your password?**, and follow the email from `@verify.signin.aws`. Then sign in as root and turn on MFA (account menu → **Security credentials**). Root is for emergencies only; don't create access keys for it.
 5. Keep **AWS Builder ID** as the identity source. Switching to another identity source can't be undone.
 
 Activation removes the spend limit. The $100/month budget from step 4 emails you instead.
@@ -20,7 +20,7 @@ Activation removes the spend limit. The $100/month budget from step 4 emails you
 
 The organization still has an AWS-written service control policy (SCP) that only allows global services (IAM, CloudFront, Route 53, and similar) in us-east-1. ECS, RDS, and CloudFormation are blocked there until you edit it.
 
-1. <https://settings.aws.com> → **Projects** → **Manage this organization** → **Manage policies**. This opens AWS Organizations.
+1. <https://settings.aws.com> → **Projects** → **Manage this organization** (in the activation banner, or the management account card) → **Manage policies**. This opens AWS Organizations in the management account.
 2. **Service control policies** → open the policy whose statements include `UsEast1Partitional` and `RegionFloor` → **Edit policy**.
 3. Delete the `UsEast1Partitional` statement, and `DenyUsEast1WafResourceAssociation` if it's there. **Keep `RegionFloor`**: it still blocks every Region except us-east-1, us-west-2, and your home Region.
 4. **Save changes**.
