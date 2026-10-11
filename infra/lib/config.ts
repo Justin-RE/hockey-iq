@@ -4,7 +4,11 @@ import * as logs from "aws-cdk-lib/aws-logs";
 
 export const APP_NAME = "hockey-iq";
 export const REGION = "us-east-1";
-export const GITHUB_REPO = "Justin-RE/hockey-iq";
+/**
+ * OIDC `sub` prefix for Justin-RE/hockey-iq. Must match the repo's `sub_claim_prefix`: it uses
+ * GitHub's immutable subject format (owner@ownerId/repo@repoId).
+ */
+export const GITHUB_OIDC_SUBJECT_PREFIX = "repo:Justin-RE@65628833/hockey-iq@1412359495";
 export const ECR_REPOSITORY_NAME = APP_NAME;
 export const DB_NAME = "hockey_iq";
 export const CONTAINER_PORT = 3000;

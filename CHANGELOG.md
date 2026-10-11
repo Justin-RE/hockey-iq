@@ -18,3 +18,4 @@ All notable changes to HockeyIQ are documented here. The format follows [Keep a 
 - Accounts collect only a nickname and a password (scrypt-hashed). No email or other personal data.
 - Sign-up and sign-in are rate limited using CloudFront's viewer address.
 - Database connections verify the RDS certificate.
+- GitHub deploy roles trust GitHub's immutable OIDC subject (owner and repository IDs), so a renamed or re-created repository can't deploy.

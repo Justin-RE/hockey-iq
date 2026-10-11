@@ -9,7 +9,7 @@ import {
   APP_NAME,
   ECR_REPOSITORY_NAME,
   ENVIRONMENTS,
-  GITHUB_REPO,
+  GITHUB_OIDC_SUBJECT_PREFIX,
   stackName,
   type EnvName,
 } from "./config";
@@ -94,7 +94,7 @@ export class SharedStack extends Stack {
       assumedBy: new iam.WebIdentityPrincipal(provider.oidcProviderArn, {
         StringEquals: {
           "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-          "token.actions.githubusercontent.com:sub": `repo:${GITHUB_REPO}:environment:${envName}`,
+          "token.actions.githubusercontent.com:sub": `${GITHUB_OIDC_SUBJECT_PREFIX}:environment:${envName}`,
         },
       }),
     });
