@@ -8,7 +8,7 @@ What exists, where it lives, and how to rotate it. ECS tasks read secrets **only
 | Session cookie password  | Secrets Manager `hockey-iq/<env>/session`       | quarterly, and on suspected compromise |
 | Sentry DSN               | GitHub variable `SENTRY_DSN` (public by design) | only if abused (spam events)           |
 | AWS access for CI        | none: GitHub OIDC, 1-hour sessions              | nothing to rotate                      |
-| Your AWS access          | IAM Identity Center SSO sessions                | MFA on; sessions expire on their own   |
+| Your AWS access          | Builder ID sign-in, `aws login` sessions        | MFA on; sessions expire on their own   |
 
 ```bash
 export AWS_PROFILE=hockey-iq ENV=staging   # or production
