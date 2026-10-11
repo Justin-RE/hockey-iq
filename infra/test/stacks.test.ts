@@ -2,7 +2,7 @@ import { App, type Stack } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { beforeAll, describe, expect, it } from "vitest";
 import { AppStack } from "../lib/app-stack";
-import { ENVIRONMENTS, GITHUB_REPO, REGION, type EnvName } from "../lib/config";
+import { ENVIRONMENTS, REGION, type EnvName } from "../lib/config";
 import { MigrateStack } from "../lib/migrate-stack";
 import { PlatformStack } from "../lib/platform-stack";
 import { SharedStack } from "../lib/shared-stack";
@@ -69,7 +69,7 @@ describe("shared stack", () => {
             Condition: {
               StringEquals: {
                 "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
-                "token.actions.githubusercontent.com:sub": `repo:${GITHUB_REPO}:environment:${envName}`,
+                "token.actions.githubusercontent.com:sub": `repo:Justin-RE@65628833/hockey-iq@1412359495:environment:${envName}`,
               },
             },
           }),
