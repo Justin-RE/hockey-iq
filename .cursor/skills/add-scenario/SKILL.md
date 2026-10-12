@@ -22,7 +22,7 @@ disable-model-invocation: true
 Follow the coordinate system in `.cursor/rules/game-scenarios.mdc`. Copy an existing file such as `src/scenarios/goal-side-marking.ts` and change:
 
 - `slug`, `title`, `category` (`set-piece` | `defense` | `attack` | `rules`), `difficulty` (1-3)
-- `description`: what the picture shows, in plain words
+- `description`: what the picture shows, in plain words. Say "your goal" or "the sideline on your left as you attack", not "the goal on the left" or "the top sideline": phones show the pitch rotated.
 - `prompt`: a question addressed to "you"
 - `avatars`: 3-10 players; exactly one with `isYou: true` on the `home` team; `away` goalkeeper near `x: 99, y: 30` if relevant
 - `ball`: starting position

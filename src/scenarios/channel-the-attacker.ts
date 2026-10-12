@@ -7,7 +7,7 @@ export const channelTheAttacker: Scenario = {
   difficulty: 2,
   summary: "An attacker is dribbling straight at you in midfield. How do you defend?",
   description:
-    "An opponent is dribbling toward your goal on the left through the middle of the field. You are the only defender in front of her, a few yards away. The bottom sideline is open space with no other players.",
+    "An opponent is dribbling through the middle of the field toward your goal. You are the only defender in front of her, a few yards away. The sideline on her left is open space with no other players.",
   prompt: "An attacker is running at you 1-on-1. What's the best way to defend?",
   avatars: [
     { id: "you", team: "home", number: 6, role: "Mid", position: { x: 33, y: 29 }, isYou: true },

@@ -8,11 +8,15 @@ import {
   type Point,
   type Scenario,
 } from "@/game/engine";
-
-const SCALE = 10;
-const MARGIN = 30;
-export const CANVAS_WIDTH = PITCH.length * SCALE + MARGIN * 2;
-export const CANVAS_HEIGHT = PITCH.width * SCALE + MARGIN * 2;
+import {
+  AVATAR_SCALE,
+  MARGIN,
+  SCALE,
+  canvasSize,
+  drawingTransform,
+  toCanvas,
+  type Orientation,
+} from "./layout";
 
 // Okabe-Ito palette: distinguishable with common color-vision deficiencies.
 const COLORS = {
@@ -31,17 +35,24 @@ export type PitchController = {
   destroy(): void;
 };
 
-const toPx = (p: Point) => ({ x: MARGIN + p.x * SCALE, y: MARGIN + p.y * SCALE });
+type PitchOptions = { orientation?: Orientation; reducedMotion?: boolean };
 
 export async function createPitch(
   parent: HTMLElement,
   scenario: Scenario,
-  { reducedMotion = false }: { reducedMotion?: boolean } = {},
+  { orientation = "landscape", reducedMotion = false }: PitchOptions = {},
 ): Promise<PitchController> {
   const Phaser = (await import("phaser")).default;
   const start = initialPositions(scenario);
+  const toPx = (p: Point) => toCanvas(p, orientation);
+  const avatarScale = AVATAR_SCALE[orientation];
+  const size = canvasSize(orientation);
   let markReady: () => void = () => {};
   const ready = new Promise<void>((resolve) => (markReady = resolve));
+  // Destroying the game mid-animation (e.g. rotating the phone) drops tweens without
+  // completing them, so release anyone still awaiting play().
+  const pending = new Set<() => void>();
+  let destroyed = false;
 
   class PitchScene extends Phaser.Scene {
     objects = new Map<string, PhaserTypes.GameObjects.Container | PhaserTypes.GameObjects.Arc>();
@@ -82,19 +93,32 @@ export async function createPitch(
           parts.unshift(ring);
           parts.push(tag);
         }
-        this.objects.set(avatar.id, this.add.container(x, y, parts).setDepth(avatar.isYou ? 3 : 2));
+        this.objects.set(
+          avatar.id,
+          this.add
+            .container(x, y, parts)
+            .setScale(avatarScale)
+            .setDepth(avatar.isYou ? 3 : 2),
+        );
       }
       const ball = toPx(scenario.ball);
       this.objects.set(
         BALL_ID,
-        this.add.circle(ball.x, ball.y, 5, COLORS.ball).setStrokeStyle(2, 0x000000).setDepth(4),
+        this.add
+          .circle(ball.x, ball.y, 5, COLORS.ball)
+          .setStrokeStyle(2, 0x000000)
+          .setScale(avatarScale)
+          .setDepth(4),
       );
       markReady();
     }
 
+    /** Draws the pitch in landscape coordinates, then turns it to fit the canvas. */
     drawPitch() {
-      const g = this.add.graphics();
-      g.fillStyle(COLORS.turf).fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      const { rotation, x, y } = drawingTransform(orientation);
+      const g = this.add.graphics().setRotation(rotation).setPosition(x, y);
+      const landscape = canvasSize("landscape");
+      g.fillStyle(COLORS.turf).fillRect(0, 0, landscape.width, landscape.height);
       g.lineStyle(3, COLORS.lines, 0.9);
       g.strokeRect(MARGIN, MARGIN, PITCH.length * SCALE, PITCH.width * SCALE);
 
@@ -134,22 +158,26 @@ export async function createPitch(
 
     tweenTo(id: string, to: Point): Promise<void> {
       const target = this.objects.get(id);
-      if (!target) return Promise.resolve();
+      if (!target || destroyed) return Promise.resolve();
       const from = this.positions[id] ?? to;
       this.positions[id] = to;
       const px = toPx(to);
       const perYard = id === BALL_ID ? 18 : 45;
       const duration = reducedMotion ? 0 : Math.max(250, distance(from, to) * perYard);
-      return new Promise((resolve) =>
+      return new Promise((resolve) => {
+        pending.add(resolve);
         this.tweens.add({
           targets: target,
           x: px.x,
           y: px.y,
           duration,
           ease: "Sine.easeInOut",
-          onComplete: () => resolve(),
-        }),
-      );
+          onComplete: () => {
+            pending.delete(resolve);
+            resolve();
+          },
+        });
+      });
     }
 
     reset() {
@@ -166,11 +194,14 @@ export async function createPitch(
   const game = new Phaser.Game({
     type: Phaser.AUTO,
     parent,
-    width: CANVAS_WIDTH,
-    height: CANVAS_HEIGHT,
+    width: size.width,
+    height: size.height,
     backgroundColor: "#2e7d4f",
     banner: false,
     audio: { noAudio: true },
+    // The pitch takes no input (answers are HTML buttons). Phaser's touch capture would
+    // otherwise cancel touches on the canvas and stop the page from scrolling on phones.
+    input: { keyboard: false, mouse: false, touch: false, gamepad: false },
     scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_HORIZONTALLY },
     scene,
   });
@@ -180,11 +211,17 @@ export async function createPitch(
   return {
     async play(timeline) {
       for (const step of timeline) {
+        if (destroyed) return;
         await Promise.all(step.map((move) => scene.tweenTo(move.target, move.to)));
         if (!reducedMotion) await new Promise((r) => setTimeout(r, 150));
       }
     },
     reset: () => scene.reset(),
-    destroy: () => game.destroy(true),
+    destroy: () => {
+      destroyed = true;
+      game.destroy(true);
+      for (const resolve of pending) resolve();
+      pending.clear();
+    },
   };
 }

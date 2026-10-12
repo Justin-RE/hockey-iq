@@ -7,7 +7,7 @@ export const goalSideMarking: Scenario = {
   difficulty: 1,
   summary: "The player you're marking is about to receive a pass near your 25. Where do you stand?",
   description:
-    "An opponent in midfield has the ball and is looking to pass. The attacker you are marking is near your 25-yard line on the lower side of the field. Right now you are standing behind her, farther from your goal than she is.",
+    "An opponent in midfield has the ball and is looking to pass. The attacker you are marking is near your 25-yard line, out to your right as you face up the field. Right now you are standing behind her, farther from your goal than she is.",
   prompt:
     "The attacker you're marking is about to receive a pass near your 25. Where should you be?",
   avatars: [

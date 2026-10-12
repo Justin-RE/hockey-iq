@@ -22,10 +22,13 @@ export default async function ScenarioPage({ params }: PageProps<"/play/[slug]">
   return (
     <div className="space-y-5">
       <div>
-        <Link href="/play" className="text-sm text-slate-600 hover:underline">
+        <Link
+          href="/play"
+          className="-mt-2 inline-flex min-h-11 items-center text-sm text-slate-600 hover:underline"
+        >
           ← All scenarios
         </Link>
-        <p className="mt-2 text-sm font-medium tracking-wide text-slate-500 uppercase">
+        <p className="text-sm font-medium tracking-wide text-slate-500 uppercase">
           {categoryLabels[scenario.category]}
         </p>
         <h1 className="text-3xl font-bold">{scenario.title}</h1>

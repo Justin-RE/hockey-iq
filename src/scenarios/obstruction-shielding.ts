@@ -8,7 +8,7 @@ export const obstructionShielding: Scenario = {
   summary:
     "A defender closes in while you have the ball near the sideline. What's legal and smart?",
   description:
-    "You have the ball in the opponent's half near the top sideline. A defender is running at you from the front. A teammate is open in the middle of the field.",
+    "You have the ball in the opponent's half near the sideline on your left. A defender is running at you from the front. A teammate is open in the middle of the field.",
   prompt: "A defender is closing in on you. What's the legal and smart play?",
   avatars: [
     { id: "you", team: "home", number: 10, role: "Mid", position: { x: 60, y: 9 }, isYou: true },

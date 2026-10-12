@@ -7,7 +7,7 @@ export const freeHitFiveYards: Scenario = {
   difficulty: 1,
   summary: "The other team has a free hit and you're right next to the ball. What should you do?",
   description:
-    "In your half of the field, the umpire has awarded the other team a free hit. Their player is standing over the ball. You are less than two yards away from it, between the ball and your goal on the left.",
+    "In your half of the field, the umpire has awarded the other team a free hit. Their player is standing over the ball. You are less than two yards away from it, between the ball and your goal.",
   prompt:
     "The opponent is about to take a free hit and you're right next to the ball. What do you do?",
   avatars: [
