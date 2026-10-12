@@ -7,7 +7,7 @@ export const twoVOneOverlap: Scenario = {
   difficulty: 3,
   summary: "You and a teammate have a 2-on-1 against the last defender. Make it count.",
   description:
-    "You are dribbling toward the opponent's goal on the right. A teammate is running alongside you on the lower side of the field. One defender stands between you and the goalkeeper.",
+    "You are dribbling toward the opponent's goal. A teammate is running alongside you on your right. One defender stands between you and the goalkeeper.",
   prompt: "It's 2-on-1 against the last defender. What do you do?",
   avatars: [
     {

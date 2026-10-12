@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { UserNav } from "@/components/UserNav";
@@ -7,6 +7,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: { default: "HockeyIQ", template: "%s | HockeyIQ" },
   description: "Learn field hockey decisions by playing through real game situations.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#1f5a38",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -22,15 +26,18 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <header className="bg-turf-dark text-white">
           <nav
             aria-label="Main"
-            className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3"
+            className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 px-4 py-1 sm:gap-x-6"
           >
-            <Link href="/" className="text-lg font-bold tracking-tight">
+            <Link
+              href="/"
+              className="inline-flex min-h-11 items-center text-lg font-bold tracking-tight"
+            >
               Hockey<span className="text-you">IQ</span>
             </Link>
-            <Link href="/play" className="hover:underline">
+            <Link href="/play" className="inline-flex min-h-11 items-center hover:underline">
               Play
             </Link>
-            <Link href="/progress" className="hover:underline">
+            <Link href="/progress" className="inline-flex min-h-11 items-center hover:underline">
               My progress
             </Link>
             <div className="ml-auto text-sm">
@@ -40,11 +47,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </div>
           </nav>
         </header>
-        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">
+        <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:py-8">
           {children}
         </main>
-        <footer className="border-t border-slate-200 py-6 text-center text-sm text-slate-600">
-          <Link href="/privacy" className="underline">
+        <footer className="border-t border-slate-200 px-4 py-3 text-center text-sm text-slate-600">
+          <Link href="/privacy" className="inline-block py-3 underline">
             Privacy
           </Link>
           <span className="mx-2" aria-hidden>

@@ -13,6 +13,18 @@ describe("scenario content", () => {
     expect(result.success, JSON.stringify(result.error?.issues, null, 2)).toBe(true);
   });
 
+  // The pitch is drawn landscape on wide screens and portrait on phones, so screen directions
+  // ("on the left", "top sideline") would be wrong in one of them. "Top of the circle" is a
+  // field hockey term, not a screen direction.
+  it.each(scenarios.map((s) => [s.slug, s] as const))(
+    "%s: description uses player directions, not screen directions",
+    (_slug, s) => {
+      const text = s.description.toLowerCase().replaceAll("top of the circle", "");
+      expect(text).not.toMatch(/\b(top|bottom|upper|lower|above|below)\b/);
+      expect(text).not.toMatch(/\b(on|to) the (left|right)\b/);
+    },
+  );
+
   it.each(scenarios.map((s) => [s.slug, s] as const))(
     "%s: every choice changes the picture",
     (_slug, s) => {

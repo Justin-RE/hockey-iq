@@ -6,7 +6,10 @@ export async function UserNav() {
   const user = await getCurrentUser();
   if (!user) {
     return (
-      <Link href="/login" className="rounded bg-white/15 px-3 py-1.5 hover:bg-white/25">
+      <Link
+        href="/login"
+        className="inline-flex min-h-11 items-center rounded bg-white/15 px-3 hover:bg-white/25"
+      >
         Sign in
       </Link>
     );
@@ -14,9 +17,13 @@ export async function UserNav() {
   return (
     <form action={logout} className="flex items-center gap-3">
       <span>
-        Signed in as <strong>{user.nickname}</strong>
+        <span className="hidden sm:inline">Signed in as </span>
+        <strong>{user.nickname}</strong>
       </span>
-      <button type="submit" className="rounded bg-white/15 px-3 py-1.5 hover:bg-white/25">
+      <button
+        type="submit"
+        className="inline-flex min-h-11 shrink-0 items-center rounded bg-white/15 px-3 hover:bg-white/25"
+      >
         Sign out
       </button>
     </form>

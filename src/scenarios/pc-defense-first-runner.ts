@@ -7,7 +7,7 @@ export const pcDefenseFirstRunner: Scenario = {
   difficulty: 2,
   summary: "The other team has a penalty corner. You're the first runner. Where do you go?",
   description:
-    "Your team is defending a penalty corner at your own goal on the left. Four defenders and your goalkeeper stand behind the backline. An opponent is ready to push the ball out from the backline to a teammate waiting at the top of the circle, with two more attackers beside her.",
+    "Your team is defending a penalty corner at your own goal. Four defenders and your goalkeeper stand behind the backline. An opponent is ready to push the ball out from the backline to a teammate waiting at the top of the circle, with two more attackers beside her.",
   prompt: "You're the first runner. When the ball is pushed out, where do you sprint?",
   avatars: [
     { id: "you", team: "home", number: 5, role: "Runner", position: { x: 0, y: 25 }, isYou: true },

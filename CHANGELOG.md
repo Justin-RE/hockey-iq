@@ -12,6 +12,7 @@ All notable changes to HockeyIQ are documented here. The format follows [Keep a 
 - Health endpoint (`/api/health`, `?deep=1` checks the database)
 - AWS infrastructure (ECS Fargate, RDS Postgres, CloudFront) and a GitHub Actions pipeline that deploys staging on merge and production on release
 - Error tracking with Sentry that sends no personal data, CloudWatch alarms, and an uptime check
+- Phone layout: the pitch turns portrait (you attack up the screen), the page never scrolls sideways, tap targets are at least 44px, and answering scrolls the play and then the feedback into view
 
 ### Security
 

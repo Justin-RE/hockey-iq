@@ -13,8 +13,16 @@ type SavedTo = "account" | "device";
 
 type Props = { scenario: Scenario; next?: { slug: string; title: string } };
 
+/** On a phone the pitch and the feedback don't fit on screen together; keep the active one in view. */
+function scrollIntoViewIfNeeded(element: HTMLElement | null) {
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  element?.scrollIntoView({ block: "nearest", behavior: reduced ? "auto" : "smooth" });
+}
+
 export function ScenarioPlayer({ scenario, next }: Props) {
   const controllerRef = useRef<PitchController | null>(null);
+  const pitchRef = useRef<HTMLDivElement>(null);
+  const feedbackRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState<Phase>("loading");
   const [outcome, setOutcome] = useState<Outcome | null>(null);
   const [savedTo, setSavedTo] = useState<SavedTo | null>(null);
@@ -42,12 +50,17 @@ export function ScenarioPlayer({ scenario, next }: Props) {
           return to;
         });
 
+      scrollIntoViewIfNeeded(pitchRef.current);
       await controllerRef.current?.play(result.timeline);
       setSavedTo(await saving);
       setPhase("answered");
     },
     [phase, scenario],
   );
+
+  useEffect(() => {
+    if (phase === "answered") scrollIntoViewIfNeeded(feedbackRef.current);
+  }, [phase]);
 
   const retry = useCallback(() => {
     controllerRef.current?.reset();
@@ -72,9 +85,11 @@ export function ScenarioPlayer({ scenario, next }: Props) {
   }, []);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
-      <div className="space-y-3">
-        <PitchCanvas scenario={scenario} controllerRef={controllerRef} onReady={onReady} />
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+      <div className="min-w-0 space-y-3">
+        <div ref={pitchRef} className="scroll-mt-2">
+          <PitchCanvas scenario={scenario} controllerRef={controllerRef} onReady={onReady} />
+        </div>
         <p className="text-sm text-slate-600">
           <span className="font-semibold">Scene: </span>
           {scenario.description}
@@ -122,12 +137,12 @@ export function ScenarioPlayer({ scenario, next }: Props) {
         </ol>
         {phase === "loading" && <p className="text-sm text-slate-500">Setting up the pitch…</p>}
         {phase === "choosing" && (
-          <p className="text-sm text-slate-500">
+          <p className="text-sm text-slate-500 pointer-coarse:hidden">
             Tip: press 1-{scenario.choices.length} to answer.
           </p>
         )}
 
-        <div aria-live="polite">
+        <div ref={feedbackRef} aria-live="polite" className="scroll-mb-4">
           {phase === "answered" && outcome && (
             <div className="space-y-3 rounded-lg border border-slate-200 bg-white p-4">
               <h3

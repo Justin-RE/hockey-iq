@@ -8,7 +8,7 @@ export const sixteenYardHitOutlet: Scenario = {
   summary:
     "You're restarting play near your own goal while opponents press. Where does the ball go?",
   description:
-    "An opponent hit the ball over your backline, so your team restarts with a free hit about 16 yards out from your goal on the left. You have the ball near the top sideline. A teammate is open along the sideline. Your center midfielder is in the middle but closely marked, and two opponents are pressing in front of you.",
+    "An opponent hit the ball over your backline, so your team restarts with a free hit about 16 yards out from your goal. You have the ball near the sideline on your left as you face up the field. A teammate is open along the sideline. Your center midfielder is in the middle but closely marked, and two opponents are pressing in front of you.",
   prompt: "You're taking the 16-yard hit. Where is the safest place to send the ball?",
   avatars: [
     { id: "you", team: "home", number: 2, role: "Back", position: { x: 15, y: 14 }, isYou: true },

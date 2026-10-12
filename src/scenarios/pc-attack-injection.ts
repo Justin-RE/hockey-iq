@@ -7,7 +7,7 @@ export const pcAttackInjection: Scenario = {
   difficulty: 1,
   summary: "Your team has a penalty corner. What has to happen before anyone shoots?",
   description:
-    "Your team is attacking a penalty corner at the opponent's goal on the right. A teammate is about to push the ball out from the backline. You wait at the top of the circle. Four defenders and their goalkeeper are behind the goal line.",
+    "Your team is attacking a penalty corner at the opponent's goal. A teammate is about to push the ball out from the backline. You wait at the top of the circle. Four defenders and their goalkeeper are behind the goal line.",
   prompt:
     "The ball is coming to you at the top of the circle. Before anyone may shoot, what must happen?",
   avatars: [
